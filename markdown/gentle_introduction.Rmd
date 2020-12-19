@@ -1,0 +1,12 @@
+---
+title: "A gentle introduction to tidymodels"
+author: "류성균"
+date: '2020 12 19 '
+output: html_document
+---
+
+- Reference : https://rviews.rstudio.com/2019/06/19/a-gentle-intro-to-tidymodels/
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
