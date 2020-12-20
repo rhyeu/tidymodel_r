@@ -1,0 +1,105 @@
+---
+title: "tidymodel official get started 2_Preporcess your data with recipes"
+author: "류성균"
+date: '2020 12 20 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+- 이 챕터에서 할 것들
+  - 변수 더미화
+  - 변수 변환 (ex- 로그 변환)
+  - 모든 변수를 동일하게 변화하는 방법
+  - 변수에서 주요한 특성 추출 (ex - 날짜 데이터에서 요일 추출)
+  
+  
+```{r}
+library(tidymodels)      # for the recipes package, along with the rest of tidymodels
+
+# Helper packages
+library(nycflights13)    # for flight data
+library(skimr)           # for variable summaries
+```
+
+### The New York city flight data
+
+- 비행기가 30분 이상 지연이 될지 예측하는 데이터 (New York 인근 공항에서 출발하는 325,819개의 2013년 비행편을 확인하는 데이터) 
+
+
+- 변수 변환 내용
+  1. `arr_delay` 변수를 30분 이상 지연됬는 지 판단하는 factor variable로 활용 (logistic regression model로 활용)
+  2. there are two variables that we don’t want to use as predictors in our model, but that we would like to retain as identification variables that can be used to troubleshoot poorly predicted data points. These are flight, a numeric value, and time_hour, a date-time value.
+  3. there are 104 flight destinations contained in dest and 16 distinct carriers.
+  
+```{r}
+set.seed(1234)
+
+flight_data <- flights %>% 
+  mutate(
+    # Convert the arrival delay to a factor
+    arr_delay = ifelse(arr_delay >= 30, "late", "on_time"),
+    arr_delay = factor(arr_delay),
+    # We will use the date (not date-time) in the recipe below
+    date = as.Date(time_hour)
+) %>% 
+    # Include the weather data
+  inner_join(weather, by = c("origin", "time_hour")) %>% 
+  # Only retain the specific columns we will use
+  select(dep_time, flight, origin, dest, air_time, distance, carrier, date, arr_delay, time_hour) %>% 
+  # Exclude missing data
+  na.omit() %>% 
+  # For creating models, it is better to have qualitative columns
+  # encoded as factors (instead of character strings)
+  mutate_if(is.character, as.factor)
+```
+
+```{r}
+flight_data %>% 
+  count(arr_delay) %>% 
+  mutate(prop = n/sum(n))
+```
+
+
+```{r}
+flight_data %>% 
+  skimr::skim(dest, carrier)
+```
+
+### Data splitting
+
+```{r}
+# Fix the random numbers by setting the seed 
+# This enables the analysis to be reproducible when random numbers are used 
+
+set.seed(555)
+
+# Put 3/4 of the data into the training set 
+data_split <- initial_split(flight_data, prop = 3/4)
+
+# Create data frames for the two sets:
+train_data <- training(data_split)
+test_data <- testing(data)
+```
+
+### Create recipe and roles
+
+- Initiating a new recipe
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
