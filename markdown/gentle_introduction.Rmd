@@ -7,7 +7,6 @@ output: html_document
 
 - Reference : https://rviews.rstudio.com/2019/06/19/a-gentle-intro-to-tidymodels/
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T)
 ```
@@ -16,6 +15,9 @@ knitr::opts_chunk$set(echo = T)
 
 ```{r}
 library(tidymodels)
+# install.packages(c("ranger", "randomForest"))
+library(ranger)
+library(randomForest)
 ```
 
 #### Data Sampling
@@ -172,4 +174,10 @@ predict(iris_ranger, iris_testing, type = "prob") %>%
   glimpse()
 ```
 
-- 
+- 평가 measure report
+```{r}
+predict(iris_ranger, iris_testing, type = "prob") %>% 
+  bind_cols(predict(iris_ranger, iris_testing)) %>% 
+  bind_cols(select(iris_testing, Species)) %>% 
+  metrics(Species, .pred_setosa:.pred_virginica, estimate = .pred_class)
+```
