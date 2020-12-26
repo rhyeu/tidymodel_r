@@ -9,6 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+- reference : https://www.tidymodels.org/start/recipes/
+
 ### Introduction
 - tidymodels의 단계
   1. Built the model (lr_mod),
@@ -209,7 +211,6 @@ flights_pred <-
   predict(flights_fit, test_data, type = "prob") %>% 
   bind_cols(test_data %>% select(arr_delay, time_hour, flight))
 
-flights_pred
 ```
 
 
