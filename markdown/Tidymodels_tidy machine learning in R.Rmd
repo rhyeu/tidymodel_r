@@ -1,0 +1,77 @@
+---
+title: 'Tidymodels: tidy machine learning in R'
+date : "10 May 2021"
+output: html_document
+---
+
+- reference : [Tidymodels: tidy machine learning in R](http://www.rebeccabarter.com/blog/2020-03-25_machine_learning/)
+
+## Getting set up
+```{r}
+suppressMessages(library(magrittr))
+suppressMessages(library(tidymodels)) %>% suppressWarnings()
+suppressMessages(library(tidyverse)) %>% suppressWarnings()
+suppressMessages(library(skimr)) %>% suppressWarnings()
+suppressMessages(library(knitr)) %>% suppressWarnings()
+
+library('mlbench')
+```
+
+```{r}
+data("PimaIndiansDiabetes")
+diabetes_orig <- PimaIndiansDiabetes
+
+diabetes_orig %>% head()
+```
+```{r}
+diabetes_clean<- diabetes_orig %>% mutate_at(vars(triceps, glucose, pressure, insulin, mass),
+                            function(.var){
+                              if_else(condition = (.var == 0),
+                                      true = as.numeric(NA),
+                                      false = .var)
+                            })
+```
+
+
+
+## Split into train / test
+```{r}
+set.seed(1234)
+diabetes_split <- initial_split(diabetes_clean, 
+                                prop = 3/4)
+```
+
+```{r}
+# extract training and testing sets
+diabetes_train <- training(diabetes_split)
+diabetes_test <- testing(diabetes_split)
+```
+
+```{r}
+# create CV object from training data
+diabetes_cv <- vfold_cv(diabetes_train, v = 5)
+
+```
+
+## Define a recipe
+```{r}
+diabetes_recipe <- recipe(diabetes ~ ., data  = diabetes_clean) %>% 
+  step_normalize(all_numeric()) %>% 
+  step_knnimpute(all_predictors())
+  
+diabetes_recipe
+```
+
+```{r}
+diabetes_train_preprocessed <- diabetes_recipe %>% 
+  prep(training = diabetes_train) %>% 
+  juice()
+
+diabetes_train_preprocessed %>% head()
+```
+
+## Specify the model
+```{r}
+
+```
+
