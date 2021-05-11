@@ -72,6 +72,120 @@ diabetes_train_preprocessed %>% head()
 
 ## Specify the model
 ```{r}
+rf_model <- 
+  # specify that the model is a random forest
+  rand_forest() %>% 
+  # specify that the `mtry` parameter needs to be tuned\
+  set_args(mtry = tune(), trees = tune()) %>% 
+  # select the engine/package that underlies the model
+  set_engine("ranger", importance =  "impurity") %>%  # importance = impurity or permutation
+  # choose either the continuous regression or binary classification mode
+  set_mode("classification")
+```
 
+```{r}
+lr_model <-
+  # specify that the model is a logistic regression
+  logistic_reg() %>% 
+  # select the engine/package that underlines the model
+  set_engine("glm") %>% 
+  set_mode("classification")
+```
+
+## Put it all together in a workflow
+
+```{r}
+rf_workflow <- workflow() %>% 
+  # add the recipe
+  add_recipe(diabetes_recipe) %>% 
+  # add the model
+  add_model(rf_model)
+```
+
+## Tune the parameters
+```{r}
+# specify which values eant to try
+rf_grid <- expand.grid(mtry = c(3,4,5), trees = c(100, 500))
+
+# extract results
+rf_tune_results <- rf_workflow %>% 
+  tune_grid(resamples = diabetes_cv, #CV object
+            grid = rf_grid, # grid of values to try
+            metrics = metric_set(accuracy, roc_auc) # metrics we care about
+            )
+```
+
+```{r}
+rf_tune_results %>% 
+  collect_metrics() %>% arrange(desc(mean))
+```
+
+## Finalize the workflow
+```{r}
+param_final <- rf_tune_results %>% 
+  select_best(metric = 'roc_auc')
+  
+param_final
+```
+- add the parameters to the workflow
+```{r}
+rf_workflow <- rf_workflow %>% 
+  finalize_workflow(param_final)
+```
+
+## Evaluate the model on the test set
+- `last_fit` 함수에서는 자동으로 train data set으로 workflow을 구축하고 test set으로 평가를 한다.
+```{r}
+rf_fit <- rf_workflow %>% 
+  # fit on the training set and evaluate on test set
+  last_fit(diabetes_split)
+```
+
+```{r}
+rf_fit
+```
+
+```{r}
+rf_fit %>% collect_metrics()
+```
+
+```{r}
+# generate predictions from the test set
+test_predictions <- rf_fit %>% collect_predictions()
+#test_predictions <- rf_fit %>% pull(.predictions)
+
+test_predictions
+
+```
+
+
+## Fitting and using your final model
+```{r}
+final_model <- fit(rf_workflow, diabetes_clean)
+```
+
+```{r}
+final_model
+```
+
+```{r}
+new_woman <- tribble(~pregnant, ~glucose, ~pressure, ~triceps, ~insulin, ~mass, ~pedigree, ~age,
+                     2, 95, 70, 31, 102, 28.2, 0.67, 47)
+
+new_woman
+```
+
+```{r}
+predict(final_model, new_data = new_woman)
+```
+
+## Variable importance
+```{r}
+ranger_obj <- pull_workflow_fit(final_model)$fit
+ranger_obj
+```
+
+```{r}
+ranger_obj$variable.importance
 ```
 
